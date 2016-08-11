@@ -13,7 +13,7 @@ import android.widget.Toast;
 import java.util.HashMap;
 import java.util.Iterator;
 
-public class MyUSBService extends Service {
+public class MyUSBService {//extends Service {
     public UsbManager myUsbManager;
     protected  UsbDevice myUsbDevice;
     protected  String TAG = new String("");
@@ -22,16 +22,16 @@ public class MyUSBService extends Service {
     protected UsbEndpoint epBulkIn, epBulkOut,epControl,epIntEndpointOut,epIntEndpointIn;
     public MyUSBService() {
     }
-
+/*
     @Override
     public IBinder onBind(Intent intent) {
         // TODO: Return the communication channel to the service.
         myUsbManager = (UsbManager)getSystemService(Context.USB_SERVICE);
         return null; //TODO
     }
-
+*/
     // 枚举设备函数
-    private void enumerateDevice(UsbManager mUsbManager) {
+    public void enumerateDevice(UsbManager mUsbManager,Context context) {
         System.out.println("开始进行枚举设备!");
         if (mUsbManager == null) {
             System.out.println("创建UsbManager失败，请重新启动应用！");
@@ -46,27 +46,25 @@ public class MyUSBService extends Service {
                         .iterator();
                 while (deviceIterator.hasNext()) {
                     UsbDevice device = deviceIterator.next();
-                    // 输出设备信息
-                    Log.i(TAG, "DeviceInfo: " + device.getVendorId() + " , "
-                            + device.getProductId());
-                    System.out.println("DeviceInfo:" + device.getVendorId()
-                            + " , " + device.getProductId());
                     // 保存设备VID和PID
                     int VendorID = device.getVendorId();
                     int ProductID = device.getProductId();
+                    // 输出设备信息
+                    Log.i(TAG, "DeviceInfo: " + VendorID + " , "
+                            + ProductID);
                     // 保存匹配到的设备
-                    if (VendorID == 1105 && ProductID == 5800) {
+                    if (VendorID == 0x067b && ProductID == 0x2303) {
                         myUsbDevice = device; // 获取USBDevice
-                        System.out.println("发现待匹配设备:" + device.getVendorId()
-                                + "," + device.getProductId());
-                        Context context = getApplicationContext();
+                        System.out.println("发现待匹配设备:" + VendorID
+                                + "," + ProductID);
+                        // = getApplicationContext();
                         Toast.makeText(context, "发现待匹配设备", Toast.LENGTH_SHORT)
                                 .show();
                     }
                 }
             } else {
                 //info.setText("请连接USB设备至PAD！");
-                Context context = getApplicationContext();
+                //Context context = getApplicationContext();
                 Toast.makeText(context, "请连接USB设备至PAD！", Toast.LENGTH_SHORT)
                         .show();
             }
@@ -74,10 +72,11 @@ public class MyUSBService extends Service {
     }
 
     // 寻找设备接口
-    private void getDeviceInterface() {
+    public void getDeviceInterface() {
         if (myUsbDevice != null) {
-            Log.d(TAG, "interfaceCounts : " + myUsbDevice.getInterfaceCount());
-            for (int i = 0; i < myUsbDevice.getInterfaceCount(); i++) {
+            int icnt = myUsbDevice.getInterfaceCount();
+            Log.d(TAG, "interfaceCounts : " + icnt);
+            for (int i = 0; i < icnt; i++) {
                 UsbInterface intf = myUsbDevice.getInterface(i);
 
                 if (i == 0) {
@@ -96,8 +95,8 @@ public class MyUSBService extends Service {
     }
 
     // 分配端点，IN | OUT，即输入输出；可以通过判断
-    private UsbEndpoint assignEndpoint(UsbInterface mInterface) {
-
+    public UsbEndpoint assignEndpoint(UsbInterface mInterface) {
+        Log.i(TAG,"Endpoint num:"+mInterface.getEndpointCount());
         for (int i = 0; i < mInterface.getEndpointCount(); i++) {
             UsbEndpoint ep = mInterface.getEndpoint(i);
             // look for bulk endpoint
@@ -171,7 +170,7 @@ public class MyUSBService extends Service {
     }
 
     // 发送数据
-    private void sendMessageToPoint(byte[] buffer) {
+    public void sendMessageToPoint(byte[] buffer) {
         // bulkOut传输
         if (myDeviceConnection
                 .bulkTransfer(epBulkOut, buffer, buffer.length, 0) < 0)
@@ -182,7 +181,7 @@ public class MyUSBService extends Service {
     }
 
     // 从设备接收数据bulkIn
-    private byte[] receiveMessageFromPoint() {
+    public byte[] receiveMessageFromPoint() {
         byte[] buffer = new byte[15];
         if (myDeviceConnection.bulkTransfer(epBulkIn, buffer, buffer.length,
                 2000) < 0)
@@ -197,14 +196,16 @@ public class MyUSBService extends Service {
         return buffer;
     }
 
-    public void onStart(Intent intent, int startId) {
+    public void onStart(/*Intent intent, int startId,*/Context context) {
         // TODO Auto-generated method stub
-        super.onStart(intent, startId); // 每次startService（intent）时都回调该方法
+        //super.onStart(intent, startId); // 每次startService（intent）时都回调该方法
         System.out.println("进入service的onStart函数");
-        myUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE); // 获取UsbManager
+        //myUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE); // 获取UsbManager
+        myUsbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
 
+        //Context context = getApplicationContext();
         // 枚举设备
-        enumerateDevice(myUsbManager);
+        enumerateDevice(myUsbManager, context);
         // 查找设备接口
         getDeviceInterface();
         // 获取设备endpoint
