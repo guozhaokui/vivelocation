@@ -42,3 +42,16 @@ void setup(){
    pinMode(ledPin, OUTPUT);      // 设置数字端口13为输出模式
    pinMode(KEY, INPUT);       // 设置数字端口2为输入模式
 }
+
+## ADC
+A0~A5 A6A7
+A4 A5 A6 A7 还没接上
+默认以输入电压作为基准源，这个可能不太稳定。
+如果要换成内部1.1v的话：
+analogReference(INTERNAL);
+DEFAULT 5v(或3.3v)
+EXTERNAL ARFE引脚
+
+analogRead 返回的是一个计数，实际电压为
+n*refv/1024.0
+5v的最小分辨率是 4.9mv，1.1v的分辨率是1mv
